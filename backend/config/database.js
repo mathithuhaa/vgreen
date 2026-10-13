@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 /** 
  * Cấu hình database 
  * Database name: vgreen (cố định) 
