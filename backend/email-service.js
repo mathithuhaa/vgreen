@@ -8,12 +8,12 @@ const nodemailer = require('nodemailer');
 // Email configuration
 const EMAIL_CONFIG = {
   service: 'gmail',
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
-    user: 'vgreenhotro@gmail.com',
-    pass: 'njrqbfixzhjtikbl' // Gmail App Password (16 ký tự không dấu cách)
+    user: process.env.EMAIL_USER || 'vgreenhotro@gmail.com',
+    pass: process.env.EMAIL_PASS || 'njrqbfixzhjtikbl' // Gmail App Password
   },
   tls: {
     rejectUnauthorized: false
@@ -266,7 +266,7 @@ const sendOTPEmail = async (toEmail, adminName, otp) => {
     
     // Email options
     const mailOptions = {
-      from: '"VGreen Security" <vgreenhotro@gmail.com>',
+      from: process.env.EMAIL_FROM || `"VGreen Security" <${process.env.EMAIL_USER || 'vgreenhotro@gmail.com'}>`,
       to: toEmail,
       subject: 'Mã xác thực đặt lại mật khẩu - VGreen Security',
       html: getOTPEmailTemplate(adminName, otp),
