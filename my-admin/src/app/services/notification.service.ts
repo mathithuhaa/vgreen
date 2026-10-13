@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, interval } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { startWith, switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AdminNotification {
   _id?: string;
@@ -28,7 +29,7 @@ export interface AdminNotification {
   providedIn: 'root'
 })
 export class NotificationService {
-  private apiUrl = 'http://localhost:3000/api/notifications';
+  private apiUrl = `${environment.apiUrl}/notifications`;
   private unreadCountSubject = new BehaviorSubject<number>(0);
   public unreadCount$: Observable<number> = this.unreadCountSubject.asObservable();
   

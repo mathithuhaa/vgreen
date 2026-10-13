@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +11,7 @@ export class ApiService {
   private http = inject(HttpClient);
 
   // Base URL của backend API
-  private baseUrl = 'http://localhost:3000/api'; // Thay đổi URL này theo backend của bạn
+  private baseUrl = `${environment.apiUrl}`; // Lấy từ environment config
 
   private httpOptions = {
     headers: new HttpHeaders({

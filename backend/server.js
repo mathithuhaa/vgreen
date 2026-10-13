@@ -28,17 +28,41 @@ const {
 } = require("./db");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// CORS - cho phép các domain frontend truy cập
+const allowedOrigins = [
+  // Local development
+  'http://localhost:4200',
+  'http://localhost:4201',
+  'http://localhost:4300',
+  'http://localhost:4301',
+  // Production Vercel domains (sẽ cập nhật sau khi deploy)
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Cho phép requests không có origin (REST clients, Postman, etc.)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS: Origin not allowed'), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 // Tăng limit để nhận base64 images (tối đa 50MB cho review với nhiều ảnh)
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// MongoDB connection string - Thay đổi theo cấu hình của bạn
-const MONGODB_URI = "mongodb://localhost:27017"; // Hoặc MongoDB Atlas URI
-const DB_NAME = "vgreen"; // Changed to lowercase to match MongoDB case-sensitivity
+// MongoDB connection string - Đọc từ biến môi trường
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
+const DB_NAME = process.env.DB_NAME || "vgreen";
 
 let db;
 let mongoClient;
@@ -159,17 +183,16 @@ connectDB()
 
         if (counts[0] === 0) {
           console.log("!!! WARNING: users collection is empty!");
-          console.log("   Run: cd backend && ./import-data.sh");
+          console.log("   Run: cd backend && npm run import-all-json");
         } else {
-          // Tự động đồng bộ tất cả collections khi server khởi động
-          // console.log(
-          //   "\nĐang đồng bộ tất cả collections từ MongoDB về JSON..."
-          // );
-          syncAllCollectionsToJsonAsync(db, {
-            usersCollection: usersCollection,
-            productsCollection: productsCollection,
-            blogsCollection: blogsCollection,
-          });
+          // Chỉ sync JSON files khi chạy local (không sync khi production - filesystem ephemeral)
+          if (process.env.NODE_ENV !== 'production') {
+            syncAllCollectionsToJsonAsync(db, {
+              usersCollection: usersCollection,
+              productsCollection: productsCollection,
+              blogsCollection: blogsCollection,
+            });
+          }
         }
       })
       .catch((err) => {
@@ -7816,7 +7839,8 @@ app.put(
 // ============================================================================
 
 app.listen(PORT, () => {
-  console.log(`Backend API server running on http://localhost:${PORT}`);
+  console.log(`Backend API server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database: ${DB_NAME}`);
 });
 
